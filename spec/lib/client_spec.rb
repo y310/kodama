@@ -106,7 +106,7 @@ describe Kodama::Client do
       }.to yield_with_args(row_event)
     end
 
-    it 'position is saved only on row, query and rotate event' do
+    it 'should save position only on row, query and rotate event' do
       stub_binlog_client([rotate_event, query_event, row_event, xid_event])
       position_file = TestPositionFile.new.tap do |pf|
         pf.should_receive(:update).with('binlog', 100).once.ordered
@@ -118,7 +118,7 @@ describe Kodama::Client do
       client.start
     end
 
-    it 'retry exactly specifeid times' do
+    it 'should retry exactly specifeid times' do
       stub_binlog_client([query_event], false)
       client.connection_retry_limit = 2
       client.connection_retry_wait = 0.1
