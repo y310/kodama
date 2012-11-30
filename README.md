@@ -120,6 +120,30 @@ Kodama::Client.start(:host => '127.0.0.1', :username => 'user') do |c|
 end
 ```
 
+### Graceful stop
+
+```ruby
+require 'kodama'
+
+Kodama::Client.start(:host => '127.0.0.1', :username => 'user') do |c|
+  c.binlog_position_file = 'position.log'
+
+  c.on_query_event do |event|
+    p event.query
+  end
+
+  Signal.trap(:QUIT) do
+    if c.safe_to_stop?
+      # stop immediately
+      exit(0)
+    else
+      # stop after processing current loop
+      c.stop_request
+    end
+  end
+end
+```
+
 ## Configuration
 
 ### binlog_position_file

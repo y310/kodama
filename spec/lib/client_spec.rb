@@ -125,5 +125,14 @@ describe Kodama::Client do
       expect { client.start }.to raise_error(Binlog::Error)
       client.connection_retry_count.should == 2
     end
+
+    it 'should stop when it is received stop request' do
+      stub_binlog_client([query_event, row_event])
+      client.on_query_event do |event|
+        self.stop_request
+      end
+      expect {|block| client.on_row_event(&block) }.not_to yield_control
+      client.start
+    end
   end
 end
