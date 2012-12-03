@@ -126,7 +126,7 @@ describe Kodama::Client do
       client.connection_retry_count.should == 2
     end
 
-    it 'should stop when it is received stop request' do
+    it 'should stop when it receives stop request' do
       stub_binlog_client([query_event, row_event])
       client.on_query_event do |event|
         self.stop_request
