@@ -165,7 +165,7 @@ module Kodama
       when Binlog::UnimplementedEvent
         callback :on_unimplemented_event, event
       else
-        @logger.debug "Not Implemented: #{event.event_type}"
+        @logger.error "Not Implemented: #{event.event_type}"
       end
     end
 
