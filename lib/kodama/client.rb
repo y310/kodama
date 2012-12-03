@@ -67,7 +67,7 @@ module Kodama
     end
 
     def gracefully_stop_on=(signals)
-      (signals.kind_of?(Array) ? signals : [signals]).each do |signal|
+      Array(signals).each do |signal|
         set_exit_trap_for(signal)
       end
     end
