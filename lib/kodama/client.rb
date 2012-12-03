@@ -33,6 +33,7 @@ module Kodama
       @retry_info = RetryInfo.new(:limit => 100, :wait => 3)
       @callbacks = {}
       @logger = Logger.new(STDOUT)
+      @safe_to_stop = true
 
       self.log_level = :info
     end
@@ -65,6 +66,18 @@ module Kodama
       @logger.level = LOG_LEVEL[level]
     end
 
+    def set_exit_trap_for(*signals)
+      signals.each do |signal|
+        Signal.trap(signal) do
+          if safe_to_stop?
+            exit(0)
+          else
+            stop_request
+          end
+        end
+      end
+    end
+
     def binlog_client(url)
       Binlog::Client.new(url)
     end
@@ -75,6 +88,14 @@ module Kodama
 
     def connection_retry_count
       @retry_info.count
+    end
+
+    def safe_to_stop?
+      !!@safe_to_stop
+    end
+
+    def stop_request
+      @stop_requested = true
     end
 
     def start
@@ -88,36 +109,10 @@ module Kodama
         end
 
         while event = client.wait_for_next_event
-          @binlog_info.position = event.next_position
-          case event
-          when Binlog::QueryEvent
-            callback :on_query_event, event
-            @binlog_info.save(@position_file)
-          when Binlog::RotateEvent
-            callback :on_rotate_event, event
-            @binlog_info.filename = event.binlog_file
-            @binlog_info.position = event.binlog_pos
-            @binlog_info.save(@position_file)
-          when Binlog::IntVarEvent
-            callback :on_int_var_event, event
-          when Binlog::UserVarEvent
-            callback :on_user_var_event, event
-          when Binlog::FormatEvent
-            callback :on_format_event, event
-          when Binlog::Xid
-            callback :on_xid, event
-          when Binlog::TableMapEvent
-            callback :on_table_map_event, event
-          when Binlog::RowEvent
-            callback :on_row_event, event
-            @binlog_info.save(@position_file)
-          when Binlog::IncidentEvent
-            callback :on_incident_event, event
-          when Binlog::UnimplementedEvent
-            callback :on_unimplemented_event, event
-          else
-            @logger.debug "Not Implemented: #{event.event_type}"
+          unsafe do
+            process_event(event)
           end
+          break if stop_requested?
         end
       rescue Binlog::Error => e
         @logger.debug e
@@ -131,6 +126,49 @@ module Kodama
     end
 
     private
+    def unsafe
+      @safe_to_stop = false
+      yield
+      @safe_to_stop = true
+    end
+
+    def stop_requested?
+      @stop_requested
+    end
+
+    def process_event(event)
+      @binlog_info.position = event.next_position
+      case event
+      when Binlog::QueryEvent
+        callback :on_query_event, event
+        @binlog_info.save(@position_file)
+      when Binlog::RotateEvent
+        callback :on_rotate_event, event
+        @binlog_info.filename = event.binlog_file
+        @binlog_info.position = event.binlog_pos
+        @binlog_info.save(@position_file)
+      when Binlog::IntVarEvent
+        callback :on_int_var_event, event
+      when Binlog::UserVarEvent
+        callback :on_user_var_event, event
+      when Binlog::FormatEvent
+        callback :on_format_event, event
+      when Binlog::Xid
+        callback :on_xid, event
+      when Binlog::TableMapEvent
+        callback :on_table_map_event, event
+      when Binlog::RowEvent
+        callback :on_row_event, event
+        @binlog_info.save(@position_file)
+      when Binlog::IncidentEvent
+        callback :on_incident_event, event
+      when Binlog::UnimplementedEvent
+        callback :on_unimplemented_event, event
+      else
+        @logger.debug "Not Implemented: #{event.event_type}"
+      end
+    end
+
     def callback(name, *args)
       if @callbacks[name]
         instance_exec *args, &@callbacks[name]
