@@ -127,19 +127,10 @@ require 'kodama'
 
 Kodama::Client.start(:host => '127.0.0.1', :username => 'user') do |c|
   c.binlog_position_file = 'position.log'
+  c.gracefully_stop_on = [:QUIT, :INT]
 
   c.on_query_event do |event|
     p event.query
-  end
-
-  Signal.trap(:QUIT) do
-    if c.safe_to_stop?
-      # stop immediately
-      exit(0)
-    else
-      # stop after processing current loop
-      c.stop_request
-    end
   end
 end
 ```

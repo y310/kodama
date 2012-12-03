@@ -66,6 +66,12 @@ module Kodama
       @logger.level = LOG_LEVEL[level]
     end
 
+    def gracefully_stop_on=(signals)
+      (signals.kind_of?(Array) ? signals : [signals]).each do |signal|
+        set_exit_trap_for(signal)
+      end
+    end
+
     def binlog_client(url)
       Binlog::Client.new(url)
     end
@@ -122,6 +128,16 @@ module Kodama
 
     def stop_requested?
       @stop_requested
+    end
+
+    def set_exit_trap_for(signal)
+      Signal.trap(signal) do
+        if safe_to_stop?
+          exit(0)
+        else
+          stop_request
+        end
+      end
     end
 
     def process_event(event)
