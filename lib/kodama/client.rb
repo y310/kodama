@@ -66,9 +66,15 @@ module Kodama
       @logger.level = LOG_LEVEL[level]
     end
 
-    def gracefully_stop_on=(signals)
-      Array(signals).each do |signal|
-        set_exit_trap_for(signal)
+    def set_exit_trap_for(*signals)
+      signals.each do |signal|
+        Signal.trap(signal) do
+          if safe_to_stop?
+            exit(0)
+          else
+            stop_request
+          end
+        end
       end
     end
 
@@ -128,16 +134,6 @@ module Kodama
 
     def stop_requested?
       @stop_requested
-    end
-
-    def set_exit_trap_for(signal)
-      Signal.trap(signal) do
-        if safe_to_stop?
-          exit(0)
-        else
-          stop_request
-        end
-      end
     end
 
     def process_event(event)
