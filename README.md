@@ -79,25 +79,17 @@ end
 ```ruby
 require 'rubygems'
 require 'kodama'
-require 'thread'
 require 'json'
 require 'redis'
 
 class Worker
-  attr_accessor :queue
   def initialize
-    @queue = Queue.new
     @redis = Redis.new
   end
 
-  def start
-    Thread.start do
-      loop do
-        event = @queue.pop
-        record_id = get_row(event)[0] # first column is id
-        @redis.set "#{event.table_name}_#{record_id}", event.rows.to_json
-      end
-    end
+  def perform(event)
+    record_id = get_row(event)[0] # first column is id
+    @redis.set "#{event.table_name}_#{record_id}", event.rows.to_json
   end
 
   def get_row(event)
@@ -112,13 +104,12 @@ end
 
 
 worker = Worker.new
-worker.start
 
 Kodama::Client.start(:host => '127.0.0.1', :username => 'user') do |c|
   c.binlog_position_file = 'position.log'
 
   c.on_row_event do |event|
-    worker.queue << event
+    worker.perform(event)
   end
 end
 ```
