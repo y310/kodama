@@ -66,7 +66,7 @@ module Kodama
       @logger.level = LOG_LEVEL[level]
     end
 
-    def set_exit_trap_for(*signals)
+    def gracefully_stop_on(*signals)
       signals.each do |signal|
         Signal.trap(signal) do
           if safe_to_stop?

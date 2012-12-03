@@ -62,7 +62,7 @@ Kodama::Client.start(:host => '127.0.0.1', :username => 'user') do |c|
   c.connection_retry_wait = 3 # second
 
   # Exit gracefully when kodama receives specified signals
-  c.set_exit_trap_for :QUIT, :INT
+  c.gracefully_stop_on :QUIT, :INT
 
   c.on_query_event do |event|
     p event.query
@@ -130,14 +130,14 @@ It accepts ``:debug``, ``:info``, ``:warn``, ``:error``, ``:fatal``.
 
 If for some reason the connection to MySQL is terminated, Kodama will attempt to reconnect ``connection_retry_limit`` times, while waiting ``connection_retry_wait`` seconds between attempts.
 
-### set_exit_trap_for
+### gracefully_stop_on
 
 Kodama traps specified signals and stop gracefully.
 It accpets multiple signals like following.
 
 ```ruby
 Kodama::Client.start do |c|
-  c.set_exit_trap_for :INT, :QUIT
+  c.gracefully_stop_on :INT, :QUIT
 end
 ```
 
