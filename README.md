@@ -24,7 +24,7 @@ Kodama can be used to replicate MySQL updates to other data stores, arbitrary so
 
 This gem links against MySQL's libreplication C shared library. You need to first install the [mysql-replication-listener](https://launchpad.net/mysql-replication-listener) package.
 
-But official repository has some bugs. It is recommended to use [winebarrel's patched version](https://bitbucket.org/winebarrel/ruby-binlog/downloads) (There are rpm package and homebrew formula).
+But official repository has some bugs. It is recommended to use [winebarrel's patched version](https://bitbucket.org/winebarrel/mysql-replication-listener) (There are rpm package and homebrew formula).
 
 ## Installation
 
