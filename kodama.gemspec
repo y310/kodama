@@ -17,7 +17,7 @@ Gem::Specification.new do |gem|
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
   gem.require_paths = ["lib"]
 
-  gem.add_dependency 'ruby-binlog', '>= 0.1.8'
+  gem.add_dependency 'ruby-binlog', '>= 0.1.9'
 
   gem.add_development_dependency 'rake'
   gem.add_development_dependency 'rspec'
